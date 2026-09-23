@@ -1,0 +1,58 @@
+/* Stock WebKit controls and system colors only, so the popup follows macOS
+   (appearance, accent color, contrast settings) instead of a custom theme. */
+:root { color-scheme: light dark; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  width: 340px;
+  max-height: 480px;
+  overflow-y: auto;
+  font: -apple-system-body;
+  font-size: 13px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
+}
+h1 { margin: 0; font: -apple-system-headline; font-size: 13px; }
+.power { display: flex; align-items: center; gap: 8px; }
+
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+fieldset:disabled .title { color: GrayText; }
+fieldset:disabled .dot { visibility: hidden; }
+.tools { display: flex; align-items: center; gap: 10px; }
+header label { display: flex; gap: 4px; align-items: center; }
+
+#list { padding: 0 12px 6px; }
+
+.empty { color: GrayText; text-align: center; padding: 24px 8px; line-height: 1.4; }
+
+.row {
+  padding: 8px 0;
+  display: grid;
+  gap: 4px;
+}
+.row + .row { border-top: 1px solid color-mix(in srgb, CanvasText 12%, transparent); }
+.title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.title .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: AccentColor;
+  vertical-align: middle;
+}
+.controls { display: grid; grid-template-columns: 1fr 36px auto auto; gap: 6px; align-items: center; }
+input[type="range"] { width: 100%; margin: 0; }
+.pct { text-align: right; color: GrayText; font-variant-numeric: tabular-nums; }
+/* Fixed width so Mute/Unmute doesn't shift the slider. */
+button.mute { width: 64px; }
+.row.muted .title { color: GrayText; }

@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <label class="power" title="Turn Tab Mixer on or off. Off plays every tab at its normal volume; your settings are kept.">
+      <h1>Tab Mixer</h1>
+      <input type="checkbox" switch id="enabled" checked>
+    </label>
+    <span class="tools">
+      <label><input type="checkbox" id="showAll"> All tabs</label>
+      <button id="dump" title="Write a full state snapshot to the log">Dump</button>
+    </span>
+  </header>
+  <!-- A disabled fieldset natively disables every control inside it. -->
+  <fieldset id="mixer"><main id="list"></main></fieldset>
+  <script src="popup.js"></script>
+</body>
+</html>

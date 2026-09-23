@@ -124,10 +124,12 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       return;
 
     // A content script asking for its tab's setting.
+    // Also says whether inject.js is registered for the page world, so the
+    // bridge only falls back to a <script> tag when it has to.
     case "get": {
       const result = await effective((await getState(sender.tab.id)) || DEFAULT);
       log("info", "get", { tab: sender.tab.id, frame: sender.frameId, result });
-      return result;
+      return { ...result, mainWorld: await mainWorldReady };
     }
 
     // The popup changing a tab. Reaches every frame in that tab.
@@ -172,14 +174,14 @@ browser.tabs.onRemoved.addListener((tabId) => {
 });
 
 // Earliest possible injection into the page world, if this Safari supports it.
-// Failure is fine: bridge.js falls back to a <script> tag.
-(async () => {
+// Resolves to whether it's registered; if not, bridge.js falls back to a <script> tag.
+const mainWorldReady = (async () => {
   try {
     const id = "tab-mixer-inject";
     const existing = await browser.scripting.getRegisteredContentScripts({ ids: [id] });
     if (existing.length) {
       log("info", "main-world-registration", { status: "already-registered" });
-      return;
+      return true;
     }
     await browser.scripting.registerContentScripts([{
       id,
@@ -190,7 +192,9 @@ browser.tabs.onRemoved.addListener((tabId) => {
       world: "MAIN",
     }]);
     log("info", "main-world-registration", { status: "registered" });
+    return true;
   } catch (err) {
     log("warn", "main-world-registration", { status: "unavailable, using script-tag fallback", error: String(err) });
+    return false;
   }
 })();

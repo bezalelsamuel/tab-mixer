@@ -23,29 +23,42 @@
   log("info", "start", { readyState: document.readyState, path: location.pathname });
 
   // ---- injecting inject.js into the page's JS world ------------------------
-  // Fallback for when the background's MAIN-world registration isn't available.
-  // inject.js guards against running twice.
-  // Strict-CSP sites (YouTube) block this tag even when the registered copy is
-  // already running, so a failure only counts as an error if inject.js never
-  // announced itself.
+  // Normally the background registers inject.js to run in the page world by
+  // itself. Only when that's unavailable (or it didn't run in this frame) do we
+  // add a <script> tag instead. inject.js guards against running twice.
   let injectSeen = false;
+  let fallbackAdded = false;
+
+  // A strict page CSP (YouTube) blocks the tag; that only matters if inject.js
+  // never announced itself some other way.
   const fallbackFailed = (event, data) => setTimeout(() => {
-    if (injectSeen) log("info", event, { ...data, harmless: "inject.js already running via MAIN-world registration" });
+    if (injectSeen) log("info", event, { ...data, harmless: "inject.js is running anyway" });
     else log("error", event, data);
   }, 1000);
-  const s = document.createElement("script");
-  s.src = browser.runtime.getURL("inject.js");
-  s.async = false;
-  s.onload = () => { log("info", "inject-tag-loaded", {}); s.remove(); };
-  s.onerror = () => fallbackFailed("inject-tag-failed", { src: s.src });
-  (document.head || document.documentElement).prepend(s);
 
-  // A page CSP that blocks our script tag shows up here.
-  document.addEventListener("securitypolicyviolation", (e) => {
-    if (String(e.blockedURI).includes("safari-web-extension") || String(e.blockedURI) === "inline") {
-      fallbackFailed("csp-violation", { blocked: e.blockedURI, directive: e.violatedDirective });
-    }
-  }, true);
+  function injectFallback(reason) {
+    if (injectSeen || fallbackAdded) return;
+    fallbackAdded = true;
+    log("info", "inject-fallback", { reason });
+    document.addEventListener("securitypolicyviolation", (e) => {
+      if (String(e.blockedURI).includes("safari-web-extension")) {
+        fallbackFailed("csp-violation", { blocked: e.blockedURI, directive: e.violatedDirective });
+      }
+    }, true);
+    const s = document.createElement("script");
+    s.src = browser.runtime.getURL("inject.js");
+    s.async = false;
+    s.onload = () => { log("info", "inject-tag-loaded", {}); s.remove(); };
+    s.onerror = () => fallbackFailed("inject-tag-failed", { src: s.src });
+    (document.head || document.documentElement).prepend(s);
+  }
+
+  function ensureInjected(mainWorld) {
+    if (injectSeen) return;
+    if (!mainWorld) return injectFallback("main-world-unavailable");
+    // Registered, but frames that loaded before registration won't have it.
+    setTimeout(() => injectFallback("main-world-did-not-run"), 300);
+  }
 
   // ---- state relay ---------------------------------------------------------
   // Slider position (0-100) -> amplitude. Squared taper so the slider feels even.
@@ -90,8 +103,12 @@
   browser.runtime.sendMessage({ type: "get" }).then((st) => {
     log("info", "get-state", st);
     if (st) {
-      state = st;
+      state = { volume: st.volume, muted: st.muted };
       push();
     }
-  }).catch((err) => log("error", "get-state-failed", { error: String(err) }));
+    ensureInjected(!!(st && st.mainWorld));
+  }).catch((err) => {
+    log("error", "get-state-failed", { error: String(err) });
+    ensureInjected(false);
+  });
 })();

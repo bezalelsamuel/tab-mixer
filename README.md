@@ -10,6 +10,10 @@ Safari can mute a tab, but it can't turn one down. Tab Mixer adds a toolbar popu
 with a volume slider for each tab, so the music in one tab can sit quietly under a
 video or a call in another.
 
+<p align="center">
+  <img src="docs/screenshot.png" width="760" alt="Tab Mixer popup in light and dark mode, with a volume slider, Reset and Mute button for each tab">
+</p>
+
 ## Features
 
 - **Volume slider per tab**, 0–100%, with a one-click **Reset** to 100%
@@ -52,6 +56,10 @@ Click the Tab Mixer button in Safari's toolbar.
 - Tabs playing audio show a blue dot. Tick **All tabs** to list silent tabs too.
 - Drag a slider to set that tab's volume; **Reset** returns it to 100%.
 - The switch next to the title turns the whole mixer off and on.
+
+<p align="center">
+  <img src="docs/screenshot-switch.png" width="760" alt="Tab Mixer switched on (left) and off (right); when off the controls are dimmed and every tab plays at normal volume">
+</p>
 
 Settings apply per tab and last until the tab is closed.
 
